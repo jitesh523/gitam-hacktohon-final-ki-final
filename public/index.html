@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthMate: Your Online Medicine Store</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <header>
+        <h1>HealthMate</h1>
+        <p>Your Online Medicine Store with Symptom Analysis Chatbot</p>
+        <nav>
+            <a href="javascript:void(0)" onclick="displayAllProducts()">Home</a>
+            <a href="javascript:void(0)" onclick="displayAllProducts()">Shop</a>
+            <a href="javascript:void(0)" onclick="openCart()">Cart (<span id="cart-count">0</span>)</a>
+        </nav>
+    </header>
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Categories</h2>
+            <ul>
+                <li><a href="javascript:void(0)" onclick="filterProducts('All')">All</a></li>
+                <li><a href="javascript:void(0)" onclick="filterProducts('Pain Relief')">Pain Relief</a></li>
+                <li><a href="javascript:void(0)" onclick="filterProducts('Cold and Flu')">Cold and Flu</a></li>
+                <li><a href="javascript:void(0)" onclick="filterProducts('Allergies')">Allergies</a></li>
+                <li><a href="javascript:void(0)" onclick="filterProducts('Digestive Health')">Digestive Health</a></li>
+                <li><a href="javascript:void(0)" onclick="filterProducts('Skin Care')">Skin Care</a></li>
+                <li><a href="javascript:void(0)" onclick="filterProducts('Heart Health')">Heart Health</a></li>
+                <li><a href="javascript:void(0)" onclick="filterProducts('Mental Health')">Mental Health</a></li>
+            </ul>
+        </aside>
+        <main class="content">
+            <h2>Products</h2>
+            <div id="products"></div>
+        </main>
+    </div>
+    <div class="container">
+        <h2>Symptom Analysis Chatbot</h2>
+        <div class="chat-container">
+            <div id="chat-log"></div>
+            <input type="text" id="user-input" class="form-control" placeholder="Type your message..." autofocus>
+            <button class="btn btn-primary mt-2" id="send-button">Send</button>
+        </div>
+    </div>
+    <footer>
+        <p>&copy; 2024 HealthMate</p>
+    </footer>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCart()">&times;</span>
+            <h2>Your Cart</h2>
+            <div id="cart-items"></div>
+            <button class="proceed" onclick="proceedToCheckout()">Proceed to Checkout</button>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div id="checkout-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCheckout()">&times;</span>
+            <h2>Checkout</h2>
+            <form id="checkout-form" onsubmit="submitCheckout(event)">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+                <label for="address">Address:</label>
+                <input type="text" id="address" name="address" required>
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+                <label for="card-number">Card Number:</label>
+                <input type="text" id="card-number" name="card-number" required>
+                <label for="expiry-date">Expiry Date:</label>
+                <input type="text" id="expiry-date" name="expiry-date" required>
+                <label for="cvv">CVV:</label>
+                <input type="text" id="cvv" name="cvv" required>
+                <button class="proceed" type="submit">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            let chatLog = [];
+
+            function appendMessage(sender, text) {
+                const messageClass = sender === 'user' ? 'user' : 'bot';
+                $('#chat-log').append(`<div class="message ${messageClass}"><div class="text">${text}</div></div>`);
+                $('#chat-log').scrollTop($('#chat-log')[0].scrollHeight);
+            }
+
+            $('#send-button').click(function() {
+                const userInput = $('#user-input').val().trim();
+                if (userInput === '') return;
+
+                appendMessage('user', userInput);
+                chatLog.push({ sender: 'user', message: userInput });
+
+                $.ajax({
+                    url: '/get_response',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ message: userInput, chat_log: chatLog }),
+                    success: function(response) {
+                        appendMessage('bot', response.bot_message);
+                        chatLog.push({ sender: 'bot', message: response.bot_message });
+                        $('#user-input').val('');
+                    },
+                    error: function(error) {
+                        console.log("Error:", error);
+                        appendMessage('bot', "An error occurred. Please try again.");
+                    }
+                });
+            });
+
+            $('#user-input').keypress(function(e) {
+                if (e.which == 13) {
+                    $('#send-button').click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
